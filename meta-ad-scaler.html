@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Meta Ad Budget Scaler</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+    .navbar { background: linear-gradient(135deg, #1877f2, #0a5bc4); padding: 14px 24px; }
+    .navbar-brand { color: #fff; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .fb-icon { width: 28px; height: 28px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #1877f2; font-weight: 900; font-size: 16px; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+    .card { background: #fff; border-radius: 16px; border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.07); margin-bottom: 20px; overflow: hidden; }
+    .card-header { background: #f8f9ff; border-bottom: 1px solid #e8ecff; padding: 14px 20px; font-weight: 600; font-size: 14px; color: #1877f2; letter-spacing: 0.3px; }
+
+    .input-section { padding: 20px; }
+    .form-label { font-size: 13px; font-weight: 500; color: #444; margin-bottom: 6px; }
+    .input-group-text { font-size: 13px; background: #f8f9ff; border-color: #dde3ff; color: #555; }
+    .form-control { font-size: 13px; border-color: #dde3ff; }
+    .form-control:focus { border-color: #1877f2; box-shadow: 0 0 0 3px rgba(24,119,242,0.1); }
+
+    .slider-wrap { padding: 10px 0 4px; }
+    .slider-label { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 6px; }
+    input[type=range] { width: 100%; accent-color: #1877f2; cursor: pointer; }
+
+    .scale-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .scale-btn { flex: 1; min-width: 60px; padding: 8px 4px; border: 1.5px solid #1877f2; background: #fff; color: #1877f2; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .scale-btn:hover { background: #1877f2; color: #fff; }
+    .scale-btn.active { background: #1877f2; color: #fff; }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; padding: 20px; }
+    .metric-card { background: #f8f9ff; border-radius: 12px; padding: 14px 16px; border-left: 3px solid #1877f2; }
+    .metric-card.green { border-left-color: #00c853; background: #f0fff4; }
+    .metric-card.orange { border-left-color: #ff6d00; background: #fff8f0; }
+    .metric-card.red { border-left-color: #e53935; background: #fff0f0; }
+    .metric-card.purple { border-left-color: #7c4dff; background: #f8f0ff; }
+    .metric-label { font-size: 11px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .metric-value { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+    .metric-value.positive { color: #00c853; }
+    .metric-value.negative { color: #e53935; }
+    .metric-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
+
+    .comparison-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .comparison-table th { background: #f0f4ff; padding: 10px 14px; text-align: left; font-weight: 600; color: #555; border-bottom: 2px solid #dde3ff; }
+    .comparison-table td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table tr:hover td { background: #fafbff; }
+    .badge-up { background: #e8fff2; color: #00a040; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+    .badge-down { background: #fff0f0; color: #e53935; font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+
+    .section-divider { display: flex; align-items: center; gap: 12px; padding: 0 20px 16px; }
+    .section-divider span { font-size: 12px; font-weight: 600; color: #888; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; }
+    .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:#eee; }
+
+    .current-badge { display: inline-block; background: #e8ecff; color: #1877f2; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; margin-left: 8px; }
+    .scaled-badge { display: inline-block; background: #e8fff2; color: #00a040; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; margin-left: 8px; }
+
+    .budget-display { text-align: center; padding: 12px; background: #f0f4ff; border-radius: 10px; margin: 12px 0; }
+    .budget-display .arrow { font-size: 20px; color: #1877f2; margin: 0 12px; }
+    .budget-from { font-size: 15px; font-weight: 600; color: #888; }
+    .budget-to { font-size: 22px; font-weight: 700; color: #1877f2; }
+    .multiplier-tag { font-size: 13px; background: #1877f2; color: #fff; padding: 3px 10px; border-radius: 20px; margin-left: 8px; }
+
+    @media(max-width:600px) {
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .metric-value { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="fb-icon">f</div>
+    Meta Ad Budget Scaler
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- INPUT CARD -->
+  <div class="card">
+    <div class="card-header">📊 Current Campaign Data</div>
+    <div class="input-section">
+      <div class="row g-3">
+        <div class="col-md-4 col-6">
+          <label class="form-label">Daily Ad Budget</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" class="form-control" id="budget" placeholder="1000" value="1000" oninput="resetScale();calc()">
+          </div>
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">Revenue / Sales</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" class="form-control" id="revenue" placeholder="5000" value="5000" oninput="calc()">
+          </div>
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">Number of Orders</label>
+          <div class="input-group">
+            <span class="input-group-text">#</span>
+            <input type="number" class="form-control" id="orders" placeholder="20" value="20" oninput="calc()">
+          </div>
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">Product Cost (per unit)</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" class="form-control" id="cogs" placeholder="200" value="200" oninput="calc()">
+          </div>
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">Impressions</label>
+          <div class="input-group">
+            <span class="input-group-text">#</span>
+            <input type="number" class="form-control" id="impressions" placeholder="50000" value="50000" oninput="calc()">
+          </div>
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label">Clicks</label>
+          <div class="input-group">
+            <span class="input-group-text">#</span>
+            <input type="number" class="form-control" id="clicks" placeholder="500" value="500" oninput="calc()">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCALE CARD -->
+  <div class="card">
+    <div class="card-header">🚀 Scale Your Budget</div>
+    <div class="input-section">
+
+      <div class="row g-3 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label">New Budget (manual)</label>
+          <div class="input-group">
+            <span class="input-group-text">₹</span>
+            <input type="number" class="form-control" id="new_budget" placeholder="0" oninput="onManualBudget()">
+          </div>
+        </div>
+        <div class="col-md-7">
+          <label class="form-label">Quick Scale</label>
+          <div class="scale-btns">
+            <button class="scale-btn" onclick="scaleBy(2)">2×</button>
+            <button class="scale-btn" onclick="scaleBy(3)">3×</button>
+            <button class="scale-btn" onclick="scaleBy(5)">5×</button>
+            <button class="scale-btn" onclick="scaleBy(10)">10×</button>
+            <button class="scale-btn" onclick="scaleBy(20)">20×</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="slider-wrap mt-3">
+        <div class="slider-label">
+          <span>₹<span id="slider_min_label">0</span></span>
+          <span style="font-weight:600;color:#1877f2">Drag to scale</span>
+          <span>₹<span id="slider_max_label">0</span></span>
+        </div>
+        <input type="range" id="budget_slider" min="0" max="100000" step="100" value="1000" oninput="onSlider()">
+      </div>
+
+      <div class="budget-display" id="budget_display">
+        <span class="budget-from">₹<span id="disp_from">1,000</span></span>
+        <span class="arrow">→</span>
+        <span class="budget-to">₹<span id="disp_to">1,000</span></span>
+        <span class="multiplier-tag" id="disp_mult">1×</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CURRENT METRICS -->
+  <div class="card">
+    <div class="card-header">📈 Current Performance <span class="current-badge">NOW</span></div>
+    <div class="results-grid" id="current_metrics"></div>
+  </div>
+
+  <!-- PROJECTED METRICS -->
+  <div class="card">
+    <div class="card-header">🎯 Projected Performance <span class="scaled-badge" id="scaled_label">After Scaling</span></div>
+    <div class="results-grid" id="scaled_metrics"></div>
+  </div>
+
+  <!-- COMPARISON TABLE -->
+  <div class="card">
+    <div class="card-header">🔍 Side-by-Side Comparison</div>
+    <div style="overflow-x:auto;padding:0 0 4px;">
+      <table class="comparison-table" id="comparison_table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Current</th>
+            <th>Projected</th>
+            <th>Change</th>
+          </tr>
+        </thead>
+        <tbody id="comparison_body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  var currentMultiplier = 1;
+
+  function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+  function fmtN(n) { return Math.round(n).toLocaleString('en-IN'); }
+  function fmtD(n) { return isFinite(n) ? parseFloat(n.toFixed(2)) : 0; }
+  function pct(n) { return isFinite(n) ? parseFloat(n.toFixed(1)) + '%' : '0%'; }
+
+  function resetScale() {
+    currentMultiplier = 1;
+    document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+    var b = v('budget');
+    document.getElementById('new_budget').value = b;
+    updateSlider(b);
+  }
+
+  function scaleBy(mult) {
+    currentMultiplier = mult;
+    document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    var newB = v('budget') * mult;
+    document.getElementById('new_budget').value = newB;
+    updateSlider(newB);
+    calc();
+  }
+
+  function onManualBudget() {
+    currentMultiplier = null;
+    document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+    updateSlider(v('new_budget'));
+    calc();
+  }
+
+  function onSlider() {
+    var val = parseFloat(document.getElementById('budget_slider').value);
+    document.getElementById('new_budget').value = val;
+    currentMultiplier = null;
+    document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('active'));
+    calc();
+  }
+
+  function updateSlider(val) {
+    var base = v('budget') || 1000;
+    var max = Math.max(base * 25, 100000);
+    var slider = document.getElementById('budget_slider');
+    slider.max = max;
+    slider.value = val;
+    document.getElementById('slider_min_label').textContent = fmtN(base);
+    document.getElementById('slider_max_label').textContent = fmtN(max);
+  }
+
+  function computeMetrics(budget, orders, revenue, cogs, impressions, clicks) {
+    var roas       = budget > 0 ? revenue / budget : 0;
+    var cpo        = orders > 0 ? budget / orders : 0;
+    var aov        = orders > 0 ? revenue / orders : 0;
+    var ctr        = impressions > 0 ? (clicks / impressions) * 100 : 0;
+    var cpc        = clicks > 0 ? budget / clicks : 0;
+    var cpm        = impressions > 0 ? (budget / impressions) * 1000 : 0;
+    var totalCogs  = orders * cogs;
+    var grossProfit= revenue - totalCogs - budget;
+    var profitPct  = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+    var convRate   = clicks > 0 ? (orders / clicks) * 100 : 0;
+    return { budget, orders, revenue, roas, cpo, aov, ctr, cpc, cpm, grossProfit, profitPct, convRate, impressions, clicks };
+  }
+
+  function renderMetrics(containerId, m, type) {
+    var el = document.getElementById(containerId);
+    var profitClass = m.grossProfit >= 0 ? 'positive' : 'negative';
+    el.innerHTML = `
+      <div class="metric-card">
+        <div class="metric-label">Ad Budget</div>
+        <div class="metric-value">${fmt(m.budget)}</div>
+        <div class="metric-sub">daily spend</div>
+      </div>
+      <div class="metric-card green">
+        <div class="metric-label">Revenue</div>
+        <div class="metric-value">${fmt(m.revenue)}</div>
+        <div class="metric-sub">total sales</div>
+      </div>
+      <div class="metric-card ${m.grossProfit>=0?'green':'red'}">
+        <div class="metric-label">Gross Profit</div>
+        <div class="metric-value ${profitClass}">${fmt(m.grossProfit)}</div>
+        <div class="metric-sub">${pct(m.profitPct)} margin</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">ROAS</div>
+        <div class="metric-value">${fmtD(m.roas)}×</div>
+        <div class="metric-sub">return on ad spend</div>
+      </div>
+      <div class="metric-card orange">
+        <div class="metric-label">Orders</div>
+        <div class="metric-value">${fmtN(m.orders)}</div>
+        <div class="metric-sub">total conversions</div>
+      </div>
+      <div class="metric-card orange">
+        <div class="metric-label">Cost Per Order</div>
+        <div class="metric-value">${fmt(m.cpo)}</div>
+        <div class="metric-sub">per conversion</div>
+      </div>
+      <div class="metric-card purple">
+        <div class="metric-label">Impressions</div>
+        <div class="metric-value">${fmtN(m.impressions)}</div>
+        <div class="metric-sub">total reach</div>
+      </div>
+      <div class="metric-card purple">
+        <div class="metric-label">CPM</div>
+        <div class="metric-value">${fmt(m.cpm)}</div>
+        <div class="metric-sub">per 1000 impressions</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Clicks</div>
+        <div class="metric-value">${fmtN(m.clicks)}</div>
+        <div class="metric-sub">total clicks</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">CPC</div>
+        <div class="metric-value">${fmt(m.cpc)}</div>
+        <div class="metric-sub">cost per click</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">CTR</div>
+        <div class="metric-value">${pct(m.ctr)}</div>
+        <div class="metric-sub">click-through rate</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Conv. Rate</div>
+        <div class="metric-value">${pct(m.convRate)}</div>
+        <div class="metric-sub">clicks to orders</div>
+      </div>
+    `;
+  }
+
+  function renderComparison(cur, scl) {
+    var rows = [
+      { label: 'Ad Budget',      cur: fmt(cur.budget),       scl: fmt(scl.budget),       pct: (scl.budget/cur.budget-1)*100 },
+      { label: 'Revenue',        cur: fmt(cur.revenue),      scl: fmt(scl.revenue),      pct: (scl.revenue/cur.revenue-1)*100 },
+      { label: 'Gross Profit',   cur: fmt(cur.grossProfit),  scl: fmt(scl.grossProfit),  pct: cur.grossProfit!==0?(scl.grossProfit/cur.grossProfit-1)*100:0 },
+      { label: 'Profit Margin',  cur: pct(cur.profitPct),    scl: pct(scl.profitPct),    pct: scl.profitPct - cur.profitPct, isAbsDiff: true },
+      { label: 'ROAS',           cur: fmtD(cur.roas)+'×',    scl: fmtD(scl.roas)+'×',    pct: 0, isStatic: true },
+      { label: 'Orders',         cur: fmtN(cur.orders),      scl: fmtN(scl.orders),      pct: (scl.orders/cur.orders-1)*100 },
+      { label: 'Cost Per Order', cur: fmt(cur.cpo),          scl: fmt(scl.cpo),          pct: 0, isStatic: true },
+      { label: 'Impressions',    cur: fmtN(cur.impressions), scl: fmtN(scl.impressions), pct: (scl.impressions/cur.impressions-1)*100 },
+      { label: 'Clicks',         cur: fmtN(cur.clicks),      scl: fmtN(scl.clicks),      pct: (scl.clicks/cur.clicks-1)*100 },
+      { label: 'CPM',            cur: fmt(cur.cpm),          scl: fmt(scl.cpm),          pct: 0, isStatic: true },
+      { label: 'CPC',            cur: fmt(cur.cpc),          scl: fmt(scl.cpc),          pct: 0, isStatic: true },
+      { label: 'CTR',            cur: pct(cur.ctr),          scl: pct(scl.ctr),          pct: 0, isStatic: true },
+    ];
+
+    var html = '';
+    rows.forEach(function(r) {
+      var badge = '';
+      if (r.isStatic) {
+        badge = '<span style="font-size:11px;color:#aaa">unchanged</span>';
+      } else if (r.isAbsDiff) {
+        var diff = parseFloat(r.pct.toFixed(1));
+        badge = diff >= 0
+          ? '<span class="badge-up">+' + diff + ' pts</span>'
+          : '<span class="badge-down">' + diff + ' pts</span>';
+      } else {
+        var p = Math.round(r.pct);
+        badge = p >= 0
+          ? '<span class="badge-up">+' + p + '%</span>'
+          : '<span class="badge-down">' + p + '%</span>';
+      }
+      html += '<tr><td style="font-weight:500">' + r.label + '</td><td>' + r.cur + '</td><td style="font-weight:600;color:#1877f2">' + r.scl + '</td><td>' + badge + '</td></tr>';
+    });
+    document.getElementById('comparison_body').innerHTML = html;
+  }
+
+  function calc() {
+    var budget      = v('budget');
+    var revenue     = v('revenue');
+    var orders      = v('orders');
+    var cogs        = v('cogs');
+    var impressions = v('impressions');
+    var clicks      = v('clicks');
+    var newBudget   = v('new_budget') || budget;
+
+    var ratio = newBudget / (budget || 1);
+    var mult  = fmtD(ratio);
+
+    // current
+    var cur = computeMetrics(budget, orders, revenue, cogs, impressions, clicks);
+
+    // scaled — budget, orders, revenue, impressions, clicks scale linearly; CPM/CPC/ROAS stay same
+    var scl = computeMetrics(
+      newBudget,
+      orders * ratio,
+      revenue * ratio,
+      cogs,
+      impressions * ratio,
+      clicks * ratio
+    );
+
+    // update budget display
+    document.getElementById('disp_from').textContent = Math.round(budget).toLocaleString('en-IN');
+    document.getElementById('disp_to').textContent   = Math.round(newBudget).toLocaleString('en-IN');
+    document.getElementById('disp_mult').textContent = mult + '×';
+
+    // update slider range
+    var max = Math.max(budget * 25, 100000);
+    var slider = document.getElementById('budget_slider');
+    slider.max = max;
+    slider.value = newBudget;
+    document.getElementById('slider_min_label').textContent = Math.round(budget).toLocaleString('en-IN');
+    document.getElementById('slider_max_label').textContent = Math.round(max).toLocaleString('en-IN');
+
+    // update scaled label
+    document.getElementById('scaled_label').textContent = mult + '× Budget';
+
+    renderMetrics('current_metrics', cur, 'current');
+    renderMetrics('scaled_metrics', scl, 'scaled');
+    renderComparison(cur, scl);
+  }
+
+  // init
+  window.onload = function() {
+    var b = v('budget');
+    document.getElementById('new_budget').value = b;
+    updateSlider(b);
+    calc();
+  };
+</script>
+</body>
+</html>
